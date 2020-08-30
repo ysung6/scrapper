@@ -18,7 +18,6 @@ type Course struct {
 	URL         string
 	Language    string
 	Commitment  string
-	HowToPass   string
 	Rating      string
 }
 
@@ -86,22 +85,23 @@ func main() {
 			Title:       title,
 			URL:         e.Request.URL.String(),
 			Description: e.ChildText("div.content"),
-			Creator:     e.ChildText("div.creator-names > span"),
+			Creator:     e.ChildText("li.banner-instructor-info > a > div > div > span"),
+			Rating:		 e.ChildText("span.number-rating"),
 		}
-		// Iterate over rows of the table which contains different information
 		// about the course
-		e.ForEach(".ProductGlance", func(_ int, el *colly.HTMLElement) {
-			switch el.ChildText("") {
-			case "Language":
-				course.Language = el.ChildText("td:nth-child(2)")
+		e.ForEach(".AboutCourse .ProductGlance > div", func(_ int, el *colly.HTMLElement) {
+			svgTitle := strings.Split(el.ChildText("div:nth-child(1) svg title"), " ")
+			lastWord := svgTitle[len(svgTitle)-1]
+			switch lastWord {
+			// svg Title: Available Langauges
+			case "languages": 
+				course.Language = el.ChildText("div:nth-child(2) > div:nth-child(1)")
+			// svg Title: Mixed/Beginner/Intermediate/Advanced Level
 			case "Level":
-				course.Level = el.ChildText("td:nth-child(2)")
-			case "Commitment":
-				course.Commitment = el.ChildText("td:nth-child(2)")
-			case "How To Pass":
-				course.HowToPass = el.ChildText("td:nth-child(2)")
-			case "User Ratings":
-				course.Rating = el.ChildText("td:nth-child(2) div:nth-of-type(2)")
+				course.Level = el.ChildText("div:nth-child(2) > div:nth-child(1)")
+			// svg Title: Hours to complete
+			case "complete":
+				course.Commitment = el.ChildText("div:nth-child(2) > div:nth-child(1)")
 			}
 		})
 		courses = append(courses, course)
